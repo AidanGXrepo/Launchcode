@@ -1,44 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <h1>Vbucks Generator</h1>
+    <title>Vbucks Generator</title>
+
+    <style>
+        body {
+            background-color: blue;
+        }
+
+        h1{
+           display:block;
+            width:400px;
+            margin:24px auto;
+            padding:14px;
+            background:navy;
+            color:black;
+            text-decoration:none;
+            border-radius:6px;
+            font-weight:bold;
+            font-size:60px;
+            transition:0.2s;
+            box-shadow:0 0 15px rgba(0,0,0,0.5);
+            text-align:center;
+        }
+        
+
+        input {
+             display:block;
+            width:260px;
+            margin:12px auto;
+            padding:14px;
+            background:lightblue;
+            color:black;
+            text-decoration:none;
+            border-radius:12px;
+            font-weight:bold;
+            font-size:20px;
+            transition:0.2s;
+            box-shadow:0 0 15px rgba(0,0,0,0.5);
+            text-align:center;
+
+        }
+
+        button {
+            display:block;
+            width:260px;
+            margin:12px auto;
+            padding:14px;
+            background:gold;
+            color:black;
+            text-decoration:none;
+            border-radius:12px;
+            font-weight:bold;
+            font-size:20px;
+            transition:0.2s;
+            box-shadow:0 0 15px rgba(0,0,0,0.5);
+            text-align:center;
+        }
+
+        button:hover{
+            transform:scale(1.06);
+        }
+
+        .gold-group {
+            margin-top: 80px;
+        }
+
+        .gold-group button {
+            margin: 4px auto;
+        }
+
+        button.normal {
+            display:block;
+            width:260px;
+            margin:12px auto;
+            padding:14px;
+            background:lightblue;
+            color:black;
+            text-decoration:none;
+            border-radius:12px;
+            font-weight:bold;
+            font-size:20px;
+            transition:0.2s;
+            box-shadow:0 0 15px rgba(0,0,0,0.5);
+            text-align:center;
+        }
+    </style>
 </head>
+
 <body>
-<style>
-.container {
-    position: relative;
-    width: 300px;
-    height: 200px;
-}
 
-input {
-    position: relative;
-    z-index: 2;
-    width: 200px;
-}
-
-button {
-    position: relative;
-    z-index: 1;
-    display: block;
-    margin-top: 10px;
-}
-</style>
+    <h1>Vbucks Generator</h1>
 
     <input type="text" placeholder="Your Username">
 
-    <button onclick="alert('Username Saved to Generator')">
+    <button class=normal onclick="alert('Username Saved to Generator')">
         Save to generator
     </button>
 
-
-    <button onclick="window.location.href='Data/1000.html'">1000 Vbucks</button>
-
-    <button onclick="window.location.href='Data/2800.html'">2800 Vbucks</button>
-
-    <button onclick="window.location.href='Data/5000.html'">5000 Vbucks</button>
-
-    <button onclick="window.location.href='Data/10000.html'">10000 Vbucks</button>
+    <div class="gold-group">
+        <button class="gold-button" onclick="window.location.href='Data/1000.html'">1000 Vbucks</button>
+        <button class="gold-button" onclick="window.location.href='Data/2800.html'">2800 Vbucks</button>
+        <button class="gold-button" onclick="window.location.href='Data/5000.html'">5000 Vbucks</button>
+        <button class="gold-button" onclick="window.location.href='Data/10000.html'">10000 Vbucks</button>
+    </div>
 
 </body>
 </html>
