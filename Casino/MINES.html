@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mines Game</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b5a2a;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 { margin-top: 10px; }
+
+#top {
+    margin: 10px;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+input, button {
+    padding: 8px;
+    margin: 5px;
+    font-size: 16px;
+}
+
+button {
+    background: gold;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#grid {
+    display: grid;
+    grid-template-columns: repeat(5, 70px);
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.cell {
+    width: 70px;
+    height: 70px;
+    background: #1a7f3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.revealed {
+    background: #2ecc71;
+}
+
+.mine {
+    background: #e74c3c;
+}
+
+#msg {
+    margin-top: 15px;
+    font-size: 20px;
+}
+
+#chips {
+    font-size: 22px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+  <button style="
+    background:gold;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:10px;
+  ">
+    Back to Hub
+  </button>
+</a>
+
+<h1>MINES</h1>
+
+<div id="chips">Chips: 100</div>
+
+<div id="top">
+
+    <label>Bet amount</label>
+    <input id="bet" type="number" value="10" min="1">
+
+    <label>Mines</label>
+    <input id="mines" type="number" value="3" min="1" max="24">
+
+    <br>
+
+    <button onclick="startGame()">Start</button>
+    <button onclick="cashOut()">Cash Out</button>
+
+</div>
+
+<div id="grid"></div>
+
+<div id="msg"></div>
+
+<script>
+
+let chips = 100;
+let bet = 0;
+let mineCount = 3;
+
+let minePositions = [];
+let revealed = [];
+let gameOver = false;
+let currentMultiplier = 1;
+
+function update(){
+    document.getElementById("chips").textContent = "Chips: " + chips;
+}
+
+function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+        let j=Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+}
+
+function startGame(){
+
+    bet = parseInt(document.getElementById("bet").value);
+    mineCount = parseInt(document.getElementById("mines").value);
+
+    if(bet > chips || bet <= 0) return;
+
+    chips -= bet;
+    update();
+
+    gameOver = false;
+    currentMultiplier = 1;
+    revealed = [];
+
+    let positions = Array.from({length:25}, (_,i)=>i);
+    shuffle(positions);
+    minePositions = positions.slice(0, mineCount);
+
+    renderGrid();
+
+    document.getElementById("msg").textContent = "Game started";
+}
+
+function renderGrid(){
+
+    let grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    for(let i=0;i<25;i++){
+
+        let cell = document.createElement("div");
+        cell.className = "cell";
+
+        if(revealed.includes(i)){
+            if(minePositions.includes(i)){
+                cell.classList.add("mine");
+                cell.textContent = "X";
+            } else {
+                cell.classList.add("revealed");
+                cell.textContent = "✔";
+            }
+        }
+
+        cell.onclick = () => reveal(i);
+
+        grid.appendChild(cell);
+    }
+}
+
+function reveal(i){
+
+    if(gameOver || revealed.includes(i)) return;
+
+    revealed.push(i);
+
+    if(minePositions.includes(i)){
+        gameOver = true;
+        revealAll();
+        document.getElementById("msg").textContent = "Boom! You hit a mine.";
+        return;
+    }
+
+    currentMultiplier += 0.2;
+
+    document.getElementById("msg").textContent =
+        "Safe! Multiplier: " + currentMultiplier.toFixed(2);
+
+    renderGrid();
+}
+
+function revealAll(){
+    revealed = Array.from({length:25},(_,i)=>i);
+    renderGrid();
+}
+
+function cashOut(){
+
+    if(gameOver) return;
+
+    let winnings = Math.floor(bet * currentMultiplier);
+
+    chips += winnings;
+
+    gameOver = true;
+    revealAll();
+
+    document.getElementById("msg").textContent =
+        "Cashed out: +" + winnings;
+
+    update();
+}
+
+update();
+
+</script>
+
+</body>
+</html>

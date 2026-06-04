@@ -1,0 +1,281 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plinko</title>
+
+<style>
+body{
+    margin:0;
+    background:#0b5a2a;
+    color:white;
+    font-family:Ubuntu,sans-serif;
+    text-align:center;
+}
+
+h1{ margin-top:10px; }
+
+#chips{
+    font-size:22px;
+    margin:10px;
+}
+
+canvas{
+    background:#145c32;
+    border:4px solid #222;
+    border-radius:10px;
+    margin-top:10px;
+}
+
+input,button{
+    padding:8px;
+    margin:5px;
+    font-size:16px;
+}
+
+button{
+    background:gold;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#msg{
+    margin-top:10px;
+    font-size:20px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+  <button style="
+    background:gold;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:10px;
+  ">
+    Back to Hub
+  </button>
+</a>
+
+<h1>PLINKO</h1>
+
+<div id="chips">Chips: 100</div>
+
+<input id="bet" type="number" value="10" min="1">
+<button onclick="dropBall()">Drop Ball</button>
+<button onclick="reset()">Reset</button>
+
+<br>
+
+<canvas id="game" width="600" height="750"></canvas>
+
+<div id="msg"></div>
+
+<script>
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let chips = 100;
+
+const pegs = [];
+const rows = 10;
+
+// UPDATED MULTIPLIERS (loss in middle, wins on edges)
+const slots = [
+3.0, 2.0, 1.2, 0.7, 0.4, 0.2, 0.4, 0.7, 1.2, 2.0, 3.0
+];
+
+let ball = null;
+
+// peg layout
+for(let row=0; row<rows; row++){
+    let count = row + 3;
+
+    for(let i=0;i<count;i++){
+
+        let spacing = 45;
+
+        let x =
+            canvas.width/2
+            - ((count-1)*spacing)/2
+            + i*spacing;
+
+        let y = 120 + row*55;
+
+        pegs.push({x,y});
+    }
+}
+
+function updateChips(){
+    document.getElementById("chips").textContent =
+        "Chips: " + chips;
+}
+
+function drawBoard(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0,0,12,canvas.height);
+    ctx.fillRect(canvas.width-12,0,12,canvas.height);
+
+    for(let peg of pegs){
+        ctx.beginPath();
+        ctx.arc(peg.x,peg.y,6,0,Math.PI*2);
+        ctx.fillStyle="white";
+        ctx.fill();
+    }
+
+    let slotWidth = canvas.width / slots.length;
+
+    for(let i=0;i<slots.length;i++){
+
+        let v = slots[i];
+
+        ctx.fillStyle =
+            v >= 1.5 ? "#f39c12" :
+            v >= 1 ? "#3498db" :
+            "#e74c3c";
+
+        ctx.fillRect(
+            i*slotWidth,
+            canvas.height-70,
+            slotWidth,
+            70
+        );
+
+        ctx.fillStyle="white";
+        ctx.font="18px Arial";
+        ctx.textAlign="center";
+
+        ctx.fillText(
+            v + "x",
+            i*slotWidth + slotWidth/2,
+            canvas.height-30
+        );
+    }
+}
+
+function drawBall(){
+    if(!ball) return;
+
+    ctx.beginPath();
+    ctx.arc(ball.x,ball.y,10,0,Math.PI*2);
+    ctx.fillStyle="gold";
+    ctx.fill();
+}
+
+function physics(){
+
+    if(!ball) return;
+
+    ball.vy += 0.12;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    if(ball.x < 22){
+        ball.x = 22;
+        ball.vx *= -0.7;
+    }
+
+    if(ball.x > canvas.width-22){
+        ball.x = canvas.width-22;
+        ball.vx *= -0.7;
+    }
+
+    for(let peg of pegs){
+
+        let dx = ball.x - peg.x;
+        let dy = ball.y - peg.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+
+        if(dist < 16){
+
+            let dir = Math.random() < 0.5 ? -1 : 1;
+
+            ball.vx = dir * (1 + Math.random()*2);
+            ball.vy *= 0.6;
+
+            ball.x += dir * 5;
+            ball.y += 3;
+        }
+    }
+
+    ball.vx *= 0.99;
+
+    if(ball.y > canvas.height - 90){
+
+        let slotWidth = canvas.width / slots.length;
+
+        let slot = Math.floor(ball.x / slotWidth);
+
+        slot = Math.max(0, Math.min(slots.length-1, slot));
+
+        let multiplier = slots[slot];
+
+        let winnings = Math.floor(ball.bet * multiplier);
+
+        chips += winnings;
+
+        updateChips();
+
+        document.getElementById("msg").textContent =
+            multiplier + "x → " +
+            (winnings >= ball.bet ? "+" : "") +
+            winnings;
+
+        ball = null;
+    }
+}
+
+function gameLoop(){
+    drawBoard();
+    physics();
+    drawBall();
+    requestAnimationFrame(gameLoop);
+}
+
+function dropBall(){
+
+    if(ball) return;
+
+    let bet = parseInt(document.getElementById("bet").value);
+
+    if(bet <= 0 || bet > chips){
+        document.getElementById("msg").textContent = "Invalid bet";
+        return;
+    }
+
+    chips -= bet;
+    updateChips();
+
+    ball = {
+        x: canvas.width/2,
+        y: 40,
+        vx: 0,
+        vy: 0,
+        bet: bet
+    };
+}
+
+function reset(){
+    chips = 100;
+    updateChips();
+    ball = null;
+    document.getElementById("msg").textContent = "";
+}
+
+updateChips();
+gameLoop();
+
+</script>
+
+</body>
+</html>

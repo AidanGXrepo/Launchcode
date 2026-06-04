@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blackjack</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b4d1b;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 {
+    margin-top: 20px;
+    font-size: 48px;
+}
+
+.table {
+    padding: 20px;
+}
+
+.cards {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.card {
+    width: 80px;
+    height: 120px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.red { color: red; }
+.black { color: black; }
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background: gold;
+    font-size: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+#message {
+    font-size: 28px;
+    margin-top: 20px;
+    min-height: 40px;
+}
+
+.score {
+    font-size: 24px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+  <button style="
+    background:gold;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:10px;
+  ">
+    Back to Hub
+  </button>
+</a>
+
+<h1>BLACKJACK</h1>
+
+<div class="table">
+
+    <h2>Dealer</h2>
+    <div id="dealer-cards" class="cards"></div>
+    <div id="dealer-score" class="score"></div>
+
+    <hr>
+
+    <h2>You</h2>
+    <div id="player-cards" class="cards"></div>
+    <div id="player-score" class="score"></div>
+
+    <div class="controls">
+        <button onclick="hit()">Hit</button>
+        <button onclick="stand()">Stand</button>
+        <button id="newGameBtn" onclick="startGame()" style="display:none;">New Game</button>
+    </div>
+
+    <div id="message"></div>
+
+</div>
+
+<script>
+
+const suits = ["♠", "♥", "♦", "♣"];
+const values = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+
+let deck = [];
+let playerHand = [];
+let dealerHand = [];
+let gameOver = false;
+
+function createDeck() {
+    deck = [];
+    for (let s of suits) {
+        for (let v of values) {
+            deck.push({ value: v, suit: s });
+        }
+    }
+    shuffle(deck);
+}
+
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+}
+
+function drawCard() {
+    return deck.pop();
+}
+
+function cardValue(card) {
+    if (["J","Q","K"].includes(card.value)) return 10;
+    if (card.value === "A") return 11;
+    return parseInt(card.value);
+}
+
+function handValue(hand) {
+    let total = 0;
+    let aces = 0;
+
+    for (let c of hand) {
+        total += cardValue(c);
+        if (c.value === "A") aces++;
+    }
+
+    while (total > 21 && aces > 0) {
+        total -= 10;
+        aces--;
+    }
+
+    return total;
+}
+
+function renderHand(hand, id, hideFirst=false) {
+    const box = document.getElementById(id);
+    box.innerHTML = "";
+
+    hand.forEach((c,i) => {
+        const d = document.createElement("div");
+        d.className = "card";
+
+        const red = (c.suit === "♥" || c.suit === "♦");
+
+        if (hideFirst && i === 0 && !gameOver) {
+            d.textContent = "?";
+        } else {
+            d.textContent = c.value + c.suit;
+            d.classList.add(red ? "red" : "black");
+        }
+
+        box.appendChild(d);
+    });
+}
+
+function updateUI() {
+    renderHand(playerHand, "player-cards");
+    renderHand(dealerHand, "dealer-cards", true);
+
+    document.getElementById("player-score").textContent =
+        "Score: " + handValue(playerHand);
+
+    document.getElementById("dealer-score").textContent =
+        gameOver ? "Score: " + handValue(dealerHand) : "Score: ?";
+}
+
+function showNewGameButton(show) {
+    document.getElementById("newGameBtn").style.display =
+        show ? "inline-block" : "none";
+}
+
+function startGame() {
+    gameOver = false;
+    createDeck();
+
+    playerHand = [drawCard(), drawCard()];
+    dealerHand = [drawCard(), drawCard()];
+
+    document.getElementById("message").textContent = "";
+    showNewGameButton(false);
+
+    updateUI();
+
+    if (handValue(playerHand) === 21) {
+        stand();
+    }
+}
+
+function hit() {
+    if (gameOver) return;
+
+    playerHand.push(drawCard());
+    updateUI();
+
+    if (handValue(playerHand) > 21) {
+        endGame("You busted! Dealer wins.");
+    }
+}
+
+function stand() {
+    if (gameOver) return;
+
+    while (handValue(dealerHand) < 17) {
+        dealerHand.push(drawCard());
+    }
+
+    const p = handValue(playerHand);
+    const d = handValue(dealerHand);
+
+    if (d > 21) endGame("Dealer busted! You win!");
+    else if (d > p) endGame("Dealer wins.");
+    else if (d < p) endGame("You win!");
+    else endGame("Push!");
+}
+
+function endGame(msg) {
+    gameOver = true;
+    updateUI();
+    document.getElementById("message").textContent = msg;
+    showNewGameButton(true);
+}
+
+startGame();
+
+</script>
+
+</body>
+</html>

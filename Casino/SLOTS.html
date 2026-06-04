@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slots</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b5a2a;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 { margin-top: 10px; }
+
+#chips {
+    font-size: 22px;
+    margin: 10px;
+}
+
+#reels {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px;
+}
+
+.reel {
+    width: 80px;
+    height: 80px;
+    background: white;
+    color: black;
+    font-size: 40px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+input, button {
+    padding: 8px;
+    margin: 5px;
+    font-size: 16px;
+}
+
+button {
+    background: gold;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#msg {
+    font-size: 20px;
+    margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+  <button style="
+    background:gold;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:10px;
+  ">
+    Back to Hub
+  </button>
+</a>
+
+<h1>SLOTS</h1>
+
+<div id="chips">Chips: 100</div>
+
+<div id="reels">
+    <div class="reel" id="r1">?</div>
+    <div class="reel" id="r2">?</div>
+    <div class="reel" id="r3">?</div>
+</div>
+
+<div>
+    <input id="bet" type="number" value="10" min="1">
+    <button onclick="spin()">Spin</button>
+    <button onclick="reset()">Reset</button>
+</div>
+
+<div id="msg"></div>
+
+<script>
+
+let chips = 100;
+
+const symbols = ["🍒","🍋","🔔","⭐","7"];
+
+function update(){
+    document.getElementById("chips").textContent = "Chips: " + chips;
+}
+
+function spin(){
+
+    let bet = parseInt(document.getElementById("bet").value);
+
+    if(bet <= 0 || bet > chips){
+        document.getElementById("msg").textContent = "Invalid bet";
+        return;
+    }
+
+    chips -= bet;
+    update();
+
+    let r1 = document.getElementById("r1");
+    let r2 = document.getElementById("r2");
+    let r3 = document.getElementById("r3");
+
+    let interval = setInterval(() => {
+        r1.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+        r2.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+        r3.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+    }, 80);
+
+    setTimeout(() => {
+
+        clearInterval(interval);
+
+        let a = symbols[Math.floor(Math.random()*symbols.length)];
+        let b = symbols[Math.floor(Math.random()*symbols.length)];
+        let c = symbols[Math.floor(Math.random()*symbols.length)];
+
+        r1.textContent = a;
+        r2.textContent = b;
+        r3.textContent = c;
+
+        let win = 0;
+
+        if(a === b && b === c){
+            win = bet * 10;
+        }
+        else if(a === b || b === c || a === c){
+            win = bet * 3;
+        }
+
+        if(win > 0){
+            chips += bet + win;
+            document.getElementById("msg").textContent = "You win +" + win;
+        } else {
+            document.getElementById("msg").textContent = "No win";
+        }
+
+        update();
+
+    }, 1200);
+}
+
+function reset(){
+    chips = 100;
+    update();
+    document.getElementById("msg").textContent = "";
+}
+
+update();
+
+</script>
+
+</body>
+</html>

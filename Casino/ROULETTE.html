@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Roulette Wheel (Fixed Full)</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b5a2a;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 { margin-top: 10px; }
+
+#wheelContainer {
+    position: relative;
+    width: 360px;
+    height: 360px;
+    margin: 20px auto;
+}
+
+#pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 26px;
+}
+
+canvas {
+    border-radius: 50%;
+    transition: transform 4s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+input, select, button {
+    padding: 8px;
+    margin: 5px;
+    font-size: 16px;
+}
+
+button {
+    background: gold;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#msg {
+    margin-top: 10px;
+    font-size: 20px;
+}
+
+#chips {
+    font-size: 22px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+  <button style="
+    background:gold;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:10px;
+  ">
+    Back to Hub
+  </button>
+</a>
+
+<h1>ROULETTE</h1>
+
+<div id="chips">Chips: 100</div>
+
+<div id="wheelContainer">
+    <div id="pointer">▼</div>
+    <canvas id="wheel" width="360" height="360"></canvas>
+</div>
+
+<div>
+    <input id="bet" type="number" value="10" min="1">
+
+    <select id="type">
+        <option value="red">Red</option>
+        <option value="black">Black</option>
+        <option value="number">Number</option>
+    </select>
+
+    <input id="guess" type="number" placeholder="Number (if needed)">
+
+    <button onclick="spin()">Spin</button>
+</div>
+
+<div id="msg"></div>
+
+<script>
+
+let chips = 100;
+let spinning = false;
+
+const wheelOrder = [
+0,32,15,19,4,21,2,25,17,34,6,27,13,36,
+11,30,8,23,10,5,24,16,33,1,20,14,31,
+9,22,18,29,7,28,12,35,3,26
+];
+
+const red = new Set([
+1,3,5,7,9,12,14,16,18,
+19,21,23,25,27,30,32,34,36
+]);
+
+function color(n){
+    if(n === 0) return "green";
+    return red.has(n) ? "red" : "black";
+}
+
+let canvas = document.getElementById("wheel");
+let ctx = canvas.getContext("2d");
+
+function drawWheel(){
+
+    let center = 180;
+    let radius = 170;
+    let step = (2 * Math.PI) / wheelOrder.length;
+
+    ctx.clearRect(0,0,360,360);
+
+    for(let i=0;i<wheelOrder.length;i++){
+
+        let start = i * step;
+
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.arc(center, center, radius, start, start + step);
+
+        ctx.fillStyle = color(wheelOrder[i]);
+        ctx.fill();
+
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate(start + step/2);
+        ctx.fillStyle = "white";
+        ctx.font = "11px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(wheelOrder[i], radius - 10, 4);
+        ctx.restore();
+    }
+}
+
+drawWheel();
+
+function update(){
+    document.getElementById("chips").textContent = "Chips: " + chips;
+}
+
+function spin(){
+
+    if(spinning) return;
+
+    let bet = parseInt(document.getElementById("bet").value);
+    let type = document.getElementById("type").value;
+    let guess = parseInt(document.getElementById("guess").value);
+
+    if(bet <= 0 || bet > chips){
+        document.getElementById("msg").textContent = "Invalid bet";
+        return;
+    }
+
+    chips -= bet;
+    update();
+
+    spinning = true;
+
+    let result = wheelOrder[Math.floor(Math.random() * wheelOrder.length)];
+
+    let index = wheelOrder.indexOf(result);
+    let anglePer = 360 / wheelOrder.length;
+
+    let rotation = 3600 + (360 - index * anglePer);
+    canvas.style.transform = `rotate(${rotation}deg)`;
+
+    setTimeout(() => {
+
+        const resultColor = color(result);
+
+        let win = false;
+
+        if(type === "red"){
+            win = (resultColor === "red");
+        }
+        else if(type === "black"){
+            win = (resultColor === "black");
+        }
+        else if(type === "number"){
+            win = (result === guess);
+        }
+
+        if(win){
+            chips += bet * 2;
+            document.getElementById("msg").textContent = "You win!";
+        } else {
+            document.getElementById("msg").textContent = "You lost";
+        }
+
+        update();
+        spinning = false;
+
+    }, 4000);
+}
+
+update();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Dice</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b5a2a;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 {
+    margin-top: 20px;
+}
+
+.dice-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 30px;
+    flex-wrap: wrap;
+}
+
+.die {
+    width: 90px;
+    height: 90px;
+    background: white;
+    color: black;
+    font-size: 40px;
+    font-weight: bold;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    transition: 0.2s;
+}
+
+.hold {
+    background: gold;
+}
+
+button {
+    padding: 12px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 8px;
+    background: gold;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 22px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+  <button style="
+    background:gold;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:10px;
+  ">
+    Back to Hub
+  </button>
+</a>
+
+<h1>POKER DICE</h1>
+
+<div class="dice-container" id="dice"></div>
+
+<button onclick="rollDice()">Roll</button>
+<button onclick="resetGame()">Restart</button>
+
+<div id="result"></div>
+
+<script>
+
+const diceFaces = ["9","10","J","Q","K","A"];
+let dice = [];
+let held = [false,false,false,false,false];
+let rolls = 0;
+
+function init(){
+    dice = Array(5).fill("?");
+    render();
+}
+
+function rollDie(){
+    return diceFaces[Math.floor(Math.random()*diceFaces.length)];
+}
+
+function render(){
+    const box = document.getElementById("dice");
+    box.innerHTML = "";
+
+    dice.forEach((d,i)=>{
+        const div = document.createElement("div");
+        div.className = "die" + (held[i] ? " hold" : "");
+        div.textContent = d;
+
+        div.onclick = () => {
+            held[i] = !held[i];
+            render();
+        };
+
+        box.appendChild(div);
+    });
+}
+
+function rollDice(){
+    rolls++;
+
+    for(let i=0;i<5;i++){
+        if(!held[i]){
+            dice[i] = rollDie();
+        }
+    }
+
+    render();
+    evaluate();
+
+    if(rolls === 1){
+        document.getElementById("result").textContent =
+            "Click dice to hold, then roll again!";
+    }
+}
+
+function evaluate(){
+    let count = {};
+    dice.forEach(d => count[d] = (count[d]||0)+1);
+
+    let values = Object.values(count).sort((a,b)=>b-a);
+
+    let result = "High Card";
+
+    if(values[0] === 5) result = "Five of a Kind";
+    else if(values[0] === 4) result = "Four of a Kind";
+    else if(values[0] === 3 && values[1] === 2) result = "Full House";
+    else if(values[0] === 3) result = "Three of a Kind";
+    else if(values[0] === 2 && values[1] === 2) result = "Two Pair";
+    else if(values[0] === 2) result = "One Pair";
+
+    document.getElementById("result").textContent = result;
+}
+
+function resetGame(){
+    dice = Array(5).fill("?");
+    held = [false,false,false,false,false];
+    rolls = 0;
+    document.getElementById("result").textContent = "";
+    render();
+}
+
+init();
+
+</script>
+
+</body>
+</html>

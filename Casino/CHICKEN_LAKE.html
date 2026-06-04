@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chicken Crossing</title>
+
+<style>
+body{
+    margin:0;
+    background:#0b5a2a;
+    color:white;
+    font-family:Ubuntu,sans-serif;
+    text-align:center;
+}
+
+h1{ margin:10px; }
+
+#chips{
+    font-size:22px;
+    margin:10px;
+}
+
+#game{
+    position:relative;
+    width:700px;
+    height:360px;
+    margin:20px auto;
+    border-radius:12px;
+    overflow:hidden;
+    background:linear-gradient(#1e90ff,#0b5a2a);
+}
+
+#chicken{
+    position:absolute;
+    width:60px;
+    height:60px;
+    background:gold;
+    border-radius:50%;
+    line-height:60px;
+    font-weight:bold;
+    z-index:10;
+    /* No transitions here keeps movement snappier */
+}
+
+.tile{
+    position:absolute;
+    width:70px;
+    height:70px;
+    background:#2ecc71;
+    border-radius:10px;
+    top:150px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    /* Smooth camera sliding transition */
+    transition: left 0.25s ease-out;
+    
+    /* Apply vertical bobbing animation */
+    animation: bobbing 2s ease-in-out infinite alternate;
+}
+
+/* Create a staggered wave effect by offsetting animation delays */
+.tile:nth-child(odd) { animation-delay: -0.5s; }
+.tile:nth-child(3n) { animation-delay: -1s; animation-duration: 1.5s; }
+.tile:nth-child(4n) { animation-delay: -0.2s; animation-duration: 2.3s; }
+
+@keyframes bobbing {
+    0% { transform: translateY(-50px); }
+    100% { transform: translateY(50px); }
+}
+
+.safe{
+    background:gold !important;
+    animation-play-state: paused; /* Lock in place once safely stepped on */
+}
+
+button{
+    padding:10px 14px;
+    margin:5px;
+    background:gold;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#msg{
+    margin-top:10px;
+    font-size:20px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+<button>Back to Hub</button>
+</a>
+
+<h1>CHICKEN CROSSING</h1>
+
+<div id="chips">Chips: 100</div>
+
+<input id="bet" type="number" value="10" min="1">
+
+<button onclick="start()">Start</button>
+<button onclick="jump()">Jump</button>
+<button onclick="cashout()">Cash Out</button>
+
+<div id="game">
+    <div id="chicken">🐔</div>
+</div>
+
+<div id="msg"></div>
+
+<script>
+
+let chips = 100;
+let bet = 0;
+
+let tiles = [];
+let index = 0;
+let multiplier = 1;
+let playing = false;
+
+const startX = 350;
+const stepX = 90;
+
+const game = document.getElementById("game");
+const chicken = document.getElementById("chicken");
+
+function update(){
+    document.getElementById("chips").textContent = "Chips: " + chips;
+}
+
+function spawnTile(i){
+    let t = document.createElement("div");
+    t.className = "tile";
+    t.textContent = "?";
+
+    t.style.left = (startX + i * stepX) + "px";
+    game.appendChild(t);
+    tiles.push(t);
+}
+
+function layoutTiles(){
+    tiles.forEach((t,i)=>{
+        t.style.left = (startX + (i - index) * stepX) + "px";
+    });
+}
+
+function start(){
+    if(playing) return;
+
+    bet = parseInt(document.getElementById("bet").value);
+    if(bet <= 0 || bet > chips) return;
+
+    chips -= bet;
+    update();
+
+    tiles.forEach(t => t.remove());
+    tiles = [];
+
+    index = 0;
+    multiplier = 1;
+    playing = true;
+
+    for(let i=0;i<6;i++){
+        spawnTile(i);
+    }
+
+    layoutTiles();
+    
+    // Reset chicken immediately back to its starting base
+    chicken.style.transition = "none";
+    game.appendChild(chicken);
+    chicken.style.left = "120px";
+    chicken.style.top = "150px";
+
+    document.getElementById("msg").textContent = "Timing is everything! Jump onto the moving tile!";
+}
+
+function jump(){
+    if(!playing) return;
+
+    let tile = tiles[index];
+    if(!tile){
+        gameOver();
+        return;
+    }
+
+    // --- TIMING MECHANIC ---
+    const matrix = new DOMMatrix(window.getComputedStyle(tile).transform);
+    const currentYOffset = matrix.f; 
+
+    // Timing check
+    if (Math.abs(currentYOffset) > 25) {
+        document.getElementById("msg").textContent = "Bad timing! Missed the tile.";
+        gameOver();
+        return;
+    }
+
+    // Freeze the target tile exactly where it was safely hit
+    tile.style.transform = `translateY(${currentYOffset}px)`;
+    tile.classList.add("safe");
+
+    multiplier += 0.7;
+    index++;
+
+    // --- INSTANT SNAP & SMOOTH CAMERA SHIFT ---
+    // 1. Instantly move the chicken into the tile DOM structure
+    tile.appendChild(chicken);
+    
+    // 2. Clear old positioning so it centers perfectly at (5px, 5px) inside the 70x70 tile
+    chicken.style.transition = "none";
+    chicken.style.left = "5px";
+    chicken.style.top = "5px";
+
+    // 3. Immediately trigger the background camera leftward slide
+    layoutTiles();
+
+    if(index + 5 > tiles.length){
+        spawnTile(tiles.length);
+    }
+
+    document.getElementById("msg").textContent = "Perfect! Multiplier: " + multiplier.toFixed(1) + "x";
+}
+
+function cashout(){
+    if(!playing) return;
+
+    let win = Math.floor(bet * multiplier);
+    chips += win;
+    update();
+
+    document.getElementById("msg").textContent = "Cashed out +" + win;
+    end();
+}
+
+function gameOver(){
+    // Release chicken structure back to root parent to allow gravity drop
+    if(chicken.parentElement !== game) {
+        let rect = chicken.getBoundingClientRect();
+        let gameRect = game.getBoundingClientRect();
+        chicken.style.left = (rect.left - gameRect.left) + "px";
+        chicken.style.top = (rect.top - gameRect.top) + "px";
+        game.appendChild(chicken);
+    }
+    
+    // Smooth high-speed drop down into the river
+    setTimeout(() => {
+        chicken.style.transition = "top 0.35s ease-in";
+        chicken.style.top = "400px";
+    }, 20);
+
+    end();
+}
+
+function end(){
+    playing = false;
+    // Halt remaining paths in position
+    tiles.forEach(t => {
+        if(!t.classList.contains("safe")) {
+            const matrix = new DOMMatrix(window.getComputedStyle(t).transform);
+            t.style.transform = `translateY(${matrix.f}px)`;
+            t.style.animation = "none";
+        }
+    });
+}
+
+update();
+
+</script>
+
+</body>
+</html>

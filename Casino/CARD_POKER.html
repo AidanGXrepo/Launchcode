@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Pot Betting</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b5a2a;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 { margin-top: 10px; }
+
+.cards {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px;
+}
+
+.card {
+    width: 70px;
+    height: 100px;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+
+.red { color: red; }
+.black { color: black; }
+
+button {
+    padding: 10px 14px;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    background: gold;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+input {
+    padding: 8px;
+    width: 120px;
+    font-size: 16px;
+}
+
+#msg {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+#chips {
+    font-size: 22px;
+    margin: 10px;
+}
+
+#pot {
+    font-size: 20px;
+    margin: 5px;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" style="text-decoration:none;">
+  <button style="
+    background:gold;
+    border:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:10px;
+  ">
+    Back to Hub
+  </button>
+</a>
+
+<h1>POKER (POT SYSTEM)</h1>
+
+<div id="chips">Chips: 100</div>
+<div id="pot">Pot: 0</div>
+
+<input id="betInput" type="number" min="1" value="10">
+
+<button onclick="betAndNext()">Bet / Next</button>
+<button onclick="restart()">Restart</button>
+
+<div class="section">
+    <h3>CPU</h3>
+    <div id="cpu" class="cards"></div>
+</div>
+
+<div class="section">
+    <h3>Board</h3>
+    <div id="board" class="cards"></div>
+</div>
+
+<div class="section">
+    <h3>You</h3>
+    <div id="player" class="cards"></div>
+</div>
+
+<div id="msg"></div>
+
+<script>
+
+const suits=["♠","♥","♦","♣"];
+const values=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+
+let deck=[];
+let cpu=[], player=[], board=[];
+
+let stage=0;
+let chips=100;
+let pot=0;
+
+function shuffle(a){
+    for(let i=a.length-1;i>0;i--){
+        let j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+    }
+}
+
+function newDeck(){
+    deck=[];
+    for(let s of suits){
+        for(let v of values){
+            deck.push({v,s});
+        }
+    }
+    shuffle(deck);
+}
+
+function draw(){ return deck.pop(); }
+
+function isRed(c){
+    return c.s==="♥"||c.s==="♦";
+}
+
+function render(cards,id,hide=false){
+    const box=document.getElementById(id);
+    box.innerHTML="";
+
+    cards.forEach(c=>{
+        const d=document.createElement("div");
+        d.className="card "+(isRed(c)?"red":"black");
+        d.textContent=hide?"?":c.v+c.s;
+        box.appendChild(d);
+    });
+}
+
+function updateUI(){
+    document.getElementById("chips").textContent="Chips: "+chips;
+    document.getElementById("pot").textContent="Pot: "+pot;
+}
+
+function startGame(){
+    newDeck();
+
+    cpu=[draw(),draw()];
+    player=[draw(),draw()];
+    board=[];
+
+    stage=0;
+    pot=0;
+
+    render(cpu,"cpu",true);
+    render(player,"player",false);
+    render(board,"board",false);
+
+    updateUI();
+
+    document.getElementById("msg").textContent="Place pre-flop bet";
+}
+
+function betAndNext(){
+
+    let bet=parseInt(document.getElementById("betInput").value);
+
+    if(bet<=0 || bet>chips){
+        document.getElementById("msg").textContent="Invalid bet";
+        return;
+    }
+
+    chips -= bet;
+    pot += bet*2; // player + CPU mirror
+
+    if(stage===0){
+        board.push(draw(),draw(),draw());
+        document.getElementById("msg").textContent="Flop";
+    }
+    else if(stage===1){
+        board.push(draw());
+        document.getElementById("msg").textContent="Turn";
+    }
+    else if(stage===2){
+        board.push(draw());
+        document.getElementById("msg").textContent="River";
+    }
+    else if(stage===3){
+        showdown();
+        return;
+    }
+
+    stage++;
+
+    updateUI();
+    render(cpu,"cpu",true);
+    render(player,"player",false);
+    render(board,"board",false);
+}
+
+function rank(hand){
+
+    let count={};
+
+    for(let c of hand){
+        count[c.v]=(count[c.v]||0)+1;
+    }
+
+    let vals=Object.values(count).sort((a,b)=>b-a);
+
+    if(vals[0]===4) return 7;
+    if(vals[0]===3&&vals[1]===2) return 6;
+    if(vals[0]===3) return 3;
+    if(vals[0]===2&&vals[1]===2) return 2;
+    if(vals[0]===2) return 1;
+
+    return 0;
+}
+
+function showdown(){
+
+    render(cpu,"cpu",false);
+
+    let p=rank([...player,...board]);
+    let c=rank([...cpu,...board]);
+
+    if(p>c){
+        chips += pot;
+        document.getElementById("msg").textContent="You win pot!";
+    }
+    else if(c>p){
+        document.getElementById("msg").textContent="CPU wins pot";
+    }
+    else {
+        chips += pot/2;
+        document.getElementById("msg").textContent="Split pot";
+    }
+
+    setTimeout(() => {
+        startGame(); // FULL RESET AFTER WINNER
+    }, 1500);
+}
+
+function restart(){
+    chips=100;
+    pot=0;
+    startGame();
+}
+
+startGame();
+
+</script>
+
+</body>
+</html>
