@@ -1,6 +1,13 @@
 <img width="8086" height="1786" alt="LaunchCode" src="https://github.com/user-attachments/assets/ec3f1c82-22dc-4dfa-b7d0-d1d6450519f6" />
 
-# I make all my logos
-This is a Website i host my code on, 
+# Launchcode
+I host my html code on this website
+# included
+- LaunchCode Casino v1.21
+- 
+- Fake Vbucks Generator (temporary)
+- 
+- My HTML UI
 
-i didnt have a better name...
+# Note
+I make all of my logos
