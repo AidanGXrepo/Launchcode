@@ -4,9 +4,7 @@
 I host my html code on this website
 # included
 - LaunchCode Casino v1.21
-- 
 - Fake Vbucks Generator (temporary)
-- 
 - My HTML UI
 
 # Note
