@@ -5,15 +5,30 @@
 
     <style>
         body {
-            background-color: blue;
+           color: rgb(38, 123, 217);
+           font-family: Arial, sans-serif;
+           background: rgb(38, 123, 217);
+           margin: 0;
+           padding: 0;
+           position: relative;
+           min-height: 100vh;
+        }
+
+        .logo {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 120px;
+            height: auto;
+            z-index: 10;
         }
 
         h1{
            display:block;
-            width:400px;
+            width:800px;
             margin:24px auto;
             padding:14px;
-            background:navy;
+            background:transparent;
             color:black;
             text-decoration:none;
             border-radius:6px;
@@ -89,8 +104,7 @@
 </head>
 
 <body>
-
-    <h1>Vbucks Generator</h1>
+    <img src="Group.png" alt="Vbucks Generator Logo" style="display:block; width: 320px; margin: 24px auto;">
 
     <input type="text" placeholder="Your Username">
 
