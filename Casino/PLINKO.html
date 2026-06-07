@@ -91,7 +91,7 @@ const slots = [
 3.0, 2.0, 1.2, 0.7, 0.4, 0.2, 0.4, 0.7, 1.2, 2.0, 3.0
 ];
 
-let ball = null;
+let balls = [];
 
 // peg layout
 for(let row=0; row<rows; row++){
@@ -163,74 +163,69 @@ function drawBoard(){
 }
 
 function drawBall(){
-    if(!ball) return;
-
-    ctx.beginPath();
-    ctx.arc(ball.x,ball.y,10,0,Math.PI*2);
-    ctx.fillStyle="gold";
-    ctx.fill();
+    for(let ball of balls){
+        ctx.beginPath();
+        ctx.arc(ball.x,ball.y,10,0,Math.PI*2);
+        ctx.fillStyle="gold";
+        ctx.fill();
+    }
 }
 
 function physics(){
+    for(let i = balls.length - 1; i >= 0; i--){
+        let ball = balls[i];
 
-    if(!ball) return;
+        ball.vy += 0.12;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
 
-    ball.vy += 0.12;
-    ball.x += ball.vx;
-    ball.y += ball.vy;
-
-    if(ball.x < 22){
-        ball.x = 22;
-        ball.vx *= -0.7;
-    }
-
-    if(ball.x > canvas.width-22){
-        ball.x = canvas.width-22;
-        ball.vx *= -0.7;
-    }
-
-    for(let peg of pegs){
-
-        let dx = ball.x - peg.x;
-        let dy = ball.y - peg.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-
-        if(dist < 16){
-
-            let dir = Math.random() < 0.5 ? -1 : 1;
-
-            ball.vx = dir * (1 + Math.random()*2);
-            ball.vy *= 0.6;
-
-            ball.x += dir * 5;
-            ball.y += 3;
+        if(ball.x < 22){
+            ball.x = 22;
+            ball.vx *= -0.7;
         }
-    }
 
-    ball.vx *= 0.99;
+        if(ball.x > canvas.width-22){
+            ball.x = canvas.width-22;
+            ball.vx *= -0.7;
+        }
 
-    if(ball.y > canvas.height - 90){
+        for(let peg of pegs){
+            let dx = ball.x - peg.x;
+            let dy = ball.y - peg.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
 
-        let slotWidth = canvas.width / slots.length;
+            if(dist < 16){
+                let dir = Math.random() < 0.5 ? -1 : 1;
 
-        let slot = Math.floor(ball.x / slotWidth);
+                ball.vx = dir * (1 + Math.random()*2);
+                ball.vy *= 0.6;
 
-        slot = Math.max(0, Math.min(slots.length-1, slot));
+                ball.x += dir * 5;
+                ball.y += 3;
+            }
+        }
 
-        let multiplier = slots[slot];
+        ball.vx *= 0.99;
 
-        let winnings = Math.floor(ball.bet * multiplier);
+        if(ball.y > canvas.height - 90){
+            let slotWidth = canvas.width / slots.length;
+            let slot = Math.floor(ball.x / slotWidth);
 
-        chips += winnings;
+            slot = Math.max(0, Math.min(slots.length-1, slot));
 
-        updateChips();
+            let multiplier = slots[slot];
+            let winnings = Math.floor(ball.bet * multiplier);
 
-        document.getElementById("msg").textContent =
-            multiplier + "x → " +
-            (winnings >= ball.bet ? "+" : "") +
-            winnings;
+            chips += winnings;
+            updateChips();
 
-        ball = null;
+            document.getElementById("msg").textContent =
+                multiplier + "x → " +
+                (winnings >= ball.bet ? "+" : "") +
+                winnings;
+
+            balls.splice(i, 1);
+        }
     }
 }
 
@@ -242,9 +237,6 @@ function gameLoop(){
 }
 
 function dropBall(){
-
-    if(ball) return;
-
     let bet = parseInt(document.getElementById("bet").value);
 
     if(bet <= 0 || bet > chips){
@@ -255,19 +247,19 @@ function dropBall(){
     chips -= bet;
     updateChips();
 
-    ball = {
+    balls.push({
         x: canvas.width/2,
         y: 40,
         vx: 0,
         vy: 0,
         bet: bet
-    };
+    });
 }
 
 function reset(){
     chips = 100;
     updateChips();
-    ball = null;
+    balls.length = 0;
     document.getElementById("msg").textContent = "";
 }
 
