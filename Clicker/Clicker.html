@@ -6,6 +6,10 @@
             body {
                 background-color: rgb(38, 123, 217);
             }
+
+            body.gold-theme {
+                background-color: gold;
+            }
             h1 {
                 display: block;
                 width: 400px;
@@ -80,6 +84,29 @@
                 cursor: pointer;
             }
 
+            Button.rebirth {
+                display: block;
+                width: 290px;
+                margin: 12px auto;
+                padding: 14px;
+                background: lightcoral;
+                color: black;
+                text-decoration: none;
+                border-radius: 12px;
+                font-weight: bold;
+                font-size: 20px;
+                transition: 0.2s;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+                text-align: center;
+            }
+
+             button.rebirth:hover {
+                background-color: red;
+            }
+
+             button.rebirth:active {
+                background-color: darkred;
+
             button.clicker:hover {
                 transform: scale(1.05);
             }
@@ -112,7 +139,7 @@
         </style>
     </head>
     <body>
-        <img src="clicker.png" alt="Clicker Logo" style="display:block; width: 640px; margin: 48px auto;">
+        <img id="logoImage" src="clicker.png" alt="Clicker Logo" style="display:block; width: 640px; margin: 48px auto;">
         <h3>Click the button or the spacebar to make coins!</h3>
         <button class="clicker" id="clickButton" onclick="increaseScore()" aria-label="Click for 1 coin">
             <img src="Button.png" alt="Click button" style="width: 100%; height: 100%; object-fit: contain;">
@@ -120,28 +147,37 @@
         <h2>Coins: <span id="score">0</span></h2>
         <h3>Coins/Click: <span id="clickValue">1</span></h3>
         <h3>Coins/sec: <span id="cps">0</span></h3>
+        <h3>Rebirths: <span id="rebirthCount">0</span></h3>
         <button onclick="toggleShop()">Shop</button>
 
         <div id="shopPanel">
             <button onclick="buyDoubleClick()">Double Click Amount</button>
-            <p id="doubleClickInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 50 coins</p>
+            <p id="doubleClickInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 500 coins</p>
             <button onclick="buyIdleCoins()">Idle Coins +5/sec</button>
-            <p id="idleInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 500 coins</p>
+            <p id="idleInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 1000 coins</p>
             <div id="spamUnlockRow" style="display:block;">
-                <button onclick="buyKeySpam()">Holding key spams button</button>
+                <button onclick="buyKeySpam()">Unlcok key hold</button>
                 <p style="text-align:center; color:black; font-weight:bold;">Cost: 1000000000 coins</p>
             </div>
-        </div>
+            <button class="rebirth"onclick="buyRebirth()">Rebirth</button>
+            <p id="rebirthInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 1,000,000,000 coins</p>
+            <button onclick="buyGoldBackground()">???</button>
+            <p id="goldBackgroundInfo" style="text-align:center; color:black; font-weight:bold;">Requires 10 rebirths and 1,000,000,000 coins</p>
+            
         <script>
             let score = 0;
             let clickValue = 1;
-            let doubleClickCost = 50;
+            let doubleClickCost = 500;
             let doubleClickOwned = 0;
             let idleCoinsPerSecond = 0;
-            let idleCost = 500;
+            let idleCost = 1000;
             let idleOwned = 0;
             let allowKeySpam = false;
+            let rebirths = 0;
+            let goldBackgroundUnlocked = false;
             const KEY_SPAM_COST = 1000000000;
+            const REBIRTH_COST = 1000000000;
+            const GOLD_BACKGROUND_REBIRTH_REQUIREMENT = 10;
 
             const SAVE_KEY = 'clickerSave';
 
@@ -154,7 +190,9 @@
                     idleCoinsPerSecond,
                     idleCost,
                     idleOwned,
-                    allowKeySpam
+                    allowKeySpam,
+                    rebirths,
+                    goldBackgroundUnlocked
                 }));
             }
 
@@ -171,6 +209,8 @@
                 idleCost = saved.idleCost || 500;
                 idleOwned = saved.idleOwned || 0;
                 allowKeySpam = Boolean(saved.allowKeySpam);
+                rebirths = saved.rebirths || 0;
+                goldBackgroundUnlocked = Boolean(saved.goldBackgroundUnlocked);
             }
 
             function updateShopInfo() {
@@ -178,6 +218,17 @@
                     'Owned: ' + doubleClickOwned + ' | Next cost: ' + doubleClickCost + ' coins';
                 document.getElementById('idleInfo').textContent =
                     'Owned: ' + idleOwned + ' | Next cost: ' + idleCost + ' coins';
+            }
+
+            function updateRebirthInfo() {
+                document.getElementById('rebirthCount').textContent = rebirths;
+                document.getElementById('rebirthInfo').textContent = 'Rebirths: ' + rebirths;
+                const goldInfo = document.getElementById('goldBackgroundInfo');
+                if (goldInfo) {
+                    goldInfo.textContent = goldBackgroundUnlocked
+                        ? 'Gold background unlocked.'
+                        : 'Requires ' + GOLD_BACKGROUND_REBIRTH_REQUIREMENT + ' rebirths and ' + REBIRTH_COST + ' coins';
+                }
             }
 
             function updateClickValueDisplay() {
@@ -189,7 +240,31 @@
                 }
             }
 
+            function resetAllProgress() {
+                score = 0;
+                clickValue = 1;
+                doubleClickCost = 500;
+                doubleClickOwned = 0;
+                idleCoinsPerSecond = 0;
+                idleCost = 1000;
+                idleOwned = 0;
+                allowKeySpam = false;
+                rebirths = 0;
+                goldBackgroundUnlocked = false;
+                document.body.classList.remove('gold-theme');
+                localStorage.removeItem(SAVE_KEY);
+
+                document.getElementById('score').textContent = score;
+                updateClickValueDisplay();
+                updateCpsDisplay();
+                updateShopInfo();
+                updateRebirthInfo();
+                updateSpamUnlockUI();
+                alert('All progress reset!');
+            }
+
             function increaseScore() {
+
                 score += clickValue;
                 document.getElementById('score').textContent = score;
                 updateClickValueDisplay();
@@ -255,11 +330,77 @@
                 saveGame();
             }
 
+            function resetForRebirth() {
+                const previousDoubleClickCost = doubleClickCost;
+                const previousIdleCost = idleCost;
+
+                score = 0;
+                clickValue = 1;
+                doubleClickCost = Math.max(1, Math.floor(previousDoubleClickCost / 2));
+                doubleClickOwned = 0;
+                idleCoinsPerSecond = 0;
+                idleCost = Math.max(1, Math.floor(previousIdleCost / 2));
+                idleOwned = 0;
+                allowKeySpam = false;
+                rebirths += 1;
+            }
+
+            function buyRebirth() {
+                if (score < REBIRTH_COST) {
+                    alert('Not enough coins!');
+                    return;
+                }
+
+                score -= REBIRTH_COST;
+                resetForRebirth();
+
+                document.getElementById('score').textContent = score;
+                updateClickValueDisplay();
+                updateCpsDisplay();
+                updateShopInfo();
+                updateRebirthInfo();
+                updateSpamUnlockUI();
+                saveGame();
+            }
+
+            function buyGoldBackground() {
+                if (goldBackgroundUnlocked) {
+                    alert('Gold background is already unlocked.');
+                    return;
+                }
+
+                if (rebirths < GOLD_BACKGROUND_REBIRTH_REQUIREMENT) {
+                    alert('You need 10 rebirths first.');
+                    return;
+                }
+
+                if (score < REBIRTH_COST) {
+                    alert('Not enough coins!');
+                    return;
+                }
+
+                score -= REBIRTH_COST;
+                goldBackgroundUnlocked = true;
+                document.body.classList.add('gold-theme');
+                const logo = document.getElementById('logoImage');
+                if (logo) {
+                    logo.src = 'championclicker.png';
+                }
+
+                document.getElementById('score').textContent = score;
+                updateRebirthInfo();
+                saveGame();
+            }
+
             loadGame();
+            if (goldBackgroundUnlocked) {
+                document.body.classList.add('gold-theme');
+            }
             document.getElementById('score').textContent = score;
             updateClickValueDisplay();
             updateCpsDisplay();
             updateShopInfo();
+            updateRebirthInfo();
             updateSpamUnlockUI();
 
             setInterval(() => {
