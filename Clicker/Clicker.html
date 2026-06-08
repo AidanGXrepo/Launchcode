@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Clicker</title>
+        <style>
+            body {
+                background-color: rgb(38, 123, 217);
+            }
+            h1 {
+                display: block;
+                width: 400px;
+                margin: 24px auto;
+                padding: 14px;
+                background: gray;
+                color: black;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+                font-size: 60px;
+                transition: 0.2s;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+                text-align: center;
+            }
+
+            h2 {
+                display: block;
+                width: 280px;
+                margin: 12px auto;
+                padding: 14px;
+                background: gray;
+                color: black;
+                text-decoration: none;
+                border-radius: 12px;
+                font-weight: bold;
+                font-size: 20px;
+                transition: 0.2s;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+                text-align: center;
+            }
+
+            h3 {
+                text-align: center;
+                font-size: 30px;
+                color: black;
+            }
+
+               button {
+                display: block;
+                width: 290px;
+                margin: 12px auto;
+                padding: 14px;
+                background: gray;
+                color: black;
+                text-decoration: none;
+                border-radius: 12px;
+                font-weight: bold;
+                font-size: 20px;
+                transition: 0.2s;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+                text-align: center;
+            }
+
+               button.clicker {
+                display: block;
+                width: 100px;
+                height: 100px;
+                margin: 12px auto;
+                padding: 14px;
+                background: linear-gradient(to right, white, black);
+                color: black;
+                text-decoration: none;
+                border-radius: 12px;
+                font-weight: bold;
+                font-size: 20px;
+                transition: 0.2s;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+                text-align: center;
+            }
+
+
+            button:hover {
+                transform: scale(1.06);
+            }
+
+            #shopPanel {
+                display: none;
+                width: 320px;
+                margin: 16px auto;
+                padding: 16px;
+                background: rgba(0, 0, 0, 0.15);
+                border-radius: 12px;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            }
+
+            #shopPanel button {
+                width: 260px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <img src="clicker.png" alt="HTML-UI logo" style="display:block; width: 640px; margin: 48px auto;">
+        <h3>Click the button to make coins!</h3>
+        <button class="clicker" onclick="increaseScore()">Click Me!</button>
+        <h3>Coins: <span id="score">0</span></h3>
+        <h3>Coins/sec: <span id="cps">0</span></h3>
+        <button onclick="toggleShop()">Shop</button>
+
+        <div id="shopPanel">
+            <h2>Shop</h2>
+            <button onclick="buyDoubleClick()">Double Click Amount</button>
+            <p id="doubleClickInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 50 coins</p>
+            <button onclick="buyIdleCoins()">Idle Coins +5/sec</button>
+            <p id="idleInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 500 coins</p>
+        </div>
+        <script>
+            let score = 0;
+            let clickValue = 1;
+            let doubleClickCost = 50;
+            let doubleClickOwned = 0;
+            let idleCoinsPerSecond = 0;
+            let idleCost = 500;
+            let idleOwned = 0;
+
+            const SAVE_KEY = 'clickerSave';
+
+            function saveGame() {
+                localStorage.setItem(SAVE_KEY, JSON.stringify({
+                    score,
+                    clickValue,
+                    doubleClickCost,
+                    doubleClickOwned,
+                    idleCoinsPerSecond,
+                    idleCost,
+                    idleOwned
+                }));
+            }
+
+            function loadGame() {
+                const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+
+                if (!saved) return;
+
+                score = saved.score || 0;
+                clickValue = saved.clickValue || 1;
+                doubleClickCost = saved.doubleClickCost || 50;
+                doubleClickOwned = saved.doubleClickOwned || 0;
+                idleCoinsPerSecond = saved.idleCoinsPerSecond || 0;
+                idleCost = saved.idleCost || 500;
+                idleOwned = saved.idleOwned || 0;
+            }
+
+            function updateShopInfo() {
+                document.getElementById('doubleClickInfo').textContent =
+                    'Owned: ' + doubleClickOwned + ' | Next cost: ' + doubleClickCost + ' coins';
+                document.getElementById('idleInfo').textContent =
+                    'Owned: ' + idleOwned + ' | Next cost: ' + idleCost + ' coins';
+            }
+
+            function increaseScore() {
+                score += clickValue;
+                document.getElementById('score').textContent = score;
+                saveGame();
+            }
+
+            function updateCpsDisplay() {
+                document.getElementById('cps').textContent = idleCoinsPerSecond;
+            }
+
+            function buyDoubleClick() {
+                if (score < doubleClickCost) {
+                    alert('Not enough coins!');
+                    return;
+                }
+
+                score -= doubleClickCost;
+                clickValue *= 2;
+                doubleClickOwned++;
+                doubleClickCost *= 2;
+
+                document.getElementById('score').textContent = score;
+                updateShopInfo();
+                saveGame();
+            }
+
+            function buyIdleCoins() {
+                if (score < idleCost) {
+                    alert('Not enough coins!');
+                    return;
+                }
+
+                score -= idleCost;
+                idleCoinsPerSecond += 5;
+                idleOwned++;
+                idleCost *= 2;
+
+                document.getElementById('score').textContent = score;
+                updateCpsDisplay();
+                updateShopInfo();
+                saveGame();
+            }
+
+            loadGame();
+            document.getElementById('score').textContent = score;
+            updateCpsDisplay();
+            updateShopInfo();
+
+            setInterval(() => {
+                score += idleCoinsPerSecond;
+                document.getElementById('score').textContent = score;
+                saveGame();
+            }, 1000);
+
+            function toggleShop() {
+                const panel = document.getElementById('shopPanel');
+                panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            }
+        </script>
+    </body>
+</html>

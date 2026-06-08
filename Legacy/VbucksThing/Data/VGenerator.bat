@@ -1,0 +1,2 @@
+@echo off
+msg * "DONT TRUST VBUCKS GENERATORS"
