@@ -24,15 +24,16 @@
 
             h2 {
                 display: block;
-                width: 280px;
+                width: 200px;
                 margin: 12px auto;
                 padding: 14px;
-                background: gray;
+                background: Gold;
                 color: black;
                 text-decoration: none;
                 border-radius: 12px;
                 font-weight: bold;
                 font-size: 20px;
+                font-family: 'Ubuntu', sans-serif;
                 transition: 0.2s;
                 box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
                 text-align: center;
@@ -62,19 +63,31 @@
 
                button.clicker {
                 display: block;
-                width: 100px;
-                height: 100px;
+                width: 140px;
+                height: 140px;
                 margin: 12px auto;
-                padding: 14px;
-                background: linear-gradient(to right, white, black);
+                padding: 0;
+                background: transparent;
+                border: none;
                 color: black;
                 text-decoration: none;
                 border-radius: 12px;
                 font-weight: bold;
                 font-size: 20px;
-                transition: 0.2s;
-                box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+                transition: transform 0.08s ease, filter 0.08s ease;
+                box-shadow: none;
                 text-align: center;
+                cursor: pointer;
+            }
+
+            button.clicker:hover {
+                transform: scale(1.05);
+            }
+
+            button.clicker:active,
+            button.clicker.pressed {
+                transform: scale(0.95);
+                filter: brightness(1.08);
             }
 
 
@@ -99,19 +112,25 @@
         </style>
     </head>
     <body>
-        <img src="clicker.png" alt="HTML-UI logo" style="display:block; width: 640px; margin: 48px auto;">
-        <h3>Click the button to make coins!</h3>
-        <button class="clicker" onclick="increaseScore()">Click Me!</button>
-        <h3>Coins: <span id="score">0</span></h3>
+        <img src="clicker.png" alt="Clicker Logo" style="display:block; width: 640px; margin: 48px auto;">
+        <h3>Click the button or the spacebar to make coins!</h3>
+        <button class="clicker" id="clickButton" onclick="increaseScore()" aria-label="Click for 1 coin">
+            <img src="Button.png" alt="Click button" style="width: 100%; height: 100%; object-fit: contain;">
+        </button>
+        <h2>Coins: <span id="score">0</span></h2>
+        <h3>Coins/Click: <span id="clickValue">1</span></h3>
         <h3>Coins/sec: <span id="cps">0</span></h3>
         <button onclick="toggleShop()">Shop</button>
 
         <div id="shopPanel">
-            <h2>Shop</h2>
             <button onclick="buyDoubleClick()">Double Click Amount</button>
             <p id="doubleClickInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 50 coins</p>
             <button onclick="buyIdleCoins()">Idle Coins +5/sec</button>
             <p id="idleInfo" style="text-align:center; color:black; font-weight:bold;">Cost: 500 coins</p>
+            <div id="spamUnlockRow" style="display:block;">
+                <button onclick="buyKeySpam()">Holding key spams button</button>
+                <p style="text-align:center; color:black; font-weight:bold;">Cost: 1000000000 coins</p>
+            </div>
         </div>
         <script>
             let score = 0;
@@ -121,6 +140,8 @@
             let idleCoinsPerSecond = 0;
             let idleCost = 500;
             let idleOwned = 0;
+            let allowKeySpam = false;
+            const KEY_SPAM_COST = 1000000000;
 
             const SAVE_KEY = 'clickerSave';
 
@@ -132,7 +153,8 @@
                     doubleClickOwned,
                     idleCoinsPerSecond,
                     idleCost,
-                    idleOwned
+                    idleOwned,
+                    allowKeySpam
                 }));
             }
 
@@ -148,6 +170,7 @@
                 idleCoinsPerSecond = saved.idleCoinsPerSecond || 0;
                 idleCost = saved.idleCost || 500;
                 idleOwned = saved.idleOwned || 0;
+                allowKeySpam = Boolean(saved.allowKeySpam);
             }
 
             function updateShopInfo() {
@@ -157,14 +180,31 @@
                     'Owned: ' + idleOwned + ' | Next cost: ' + idleCost + ' coins';
             }
 
+            function updateClickValueDisplay() {
+                document.getElementById('clickValue').textContent = clickValue;
+                const button = document.getElementById('clickButton');
+                if (button) {
+                    button.setAttribute('aria-label', 'Click for ' + clickValue + ' coin' + (clickValue === 1 ? '' : 's'));
+                    button.title = 'Click for ' + clickValue + ' coin' + (clickValue === 1 ? '' : 's');
+                }
+            }
+
             function increaseScore() {
                 score += clickValue;
                 document.getElementById('score').textContent = score;
+                updateClickValueDisplay();
                 saveGame();
             }
 
             function updateCpsDisplay() {
                 document.getElementById('cps').textContent = idleCoinsPerSecond;
+            }
+
+            function updateSpamUnlockUI() {
+                const row = document.getElementById('spamUnlockRow');
+                if (row) {
+                    row.style.display = allowKeySpam ? 'none' : 'block';
+                }
             }
 
             function buyDoubleClick() {
@@ -179,6 +219,7 @@
                 doubleClickCost *= 2;
 
                 document.getElementById('score').textContent = score;
+                updateClickValueDisplay();
                 updateShopInfo();
                 saveGame();
             }
@@ -200,10 +241,26 @@
                 saveGame();
             }
 
+            function buyKeySpam() {
+                if (score < KEY_SPAM_COST) {
+                    alert('Not enough coins!');
+                    return;
+                }
+
+                score -= KEY_SPAM_COST;
+                allowKeySpam = true;
+
+                document.getElementById('score').textContent = score;
+                updateSpamUnlockUI();
+                saveGame();
+            }
+
             loadGame();
             document.getElementById('score').textContent = score;
+            updateClickValueDisplay();
             updateCpsDisplay();
             updateShopInfo();
+            updateSpamUnlockUI();
 
             setInterval(() => {
                 score += idleCoinsPerSecond;
@@ -215,6 +272,31 @@
                 const panel = document.getElementById('shopPanel');
                 panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
             }
+
+            function triggerClickAnimation() {
+                const button = document.getElementById('clickButton');
+                if (!button) return;
+
+                button.classList.add('pressed');
+                setTimeout(() => button.classList.remove('pressed'), 100);
+            }
+
+            function handleKeydown(event) {
+                const isKeyTrigger = event.code === 'Space' || event.key === ' ' || event.code === 'ArrowUp' || event.key === 'ArrowUp';
+
+                if (isKeyTrigger) {
+                    if (!allowKeySpam && event.repeat) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    event.preventDefault();
+                    triggerClickAnimation();
+                    increaseScore();
+                }
+            }
+
+            window.addEventListener('keydown', handleKeydown);
         </script>
     </body>
 </html>
