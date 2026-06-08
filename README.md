@@ -4,7 +4,7 @@
 I host my html code on this website
 # included
 - LaunchCode Casino v1.21
-- LaunchCode Clicker V1.0
+- LaunchCode Clicker V1.1
 
 
 **Legacy Files**
