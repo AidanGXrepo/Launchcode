@@ -2,4 +2,4 @@ CasinoHUB provides zero risk Gambling games but is completely HTML, which allows
 
 
 
-To download for offline use, download the latest release CasinoHUB.zip, Extract it and run index.html. you can also access it without downloading at https://github.com/AidanGXrepo/Launchcode/edit/main/Casino/
+To download for offline use, download the latest release CasinoHUB.zip, Extract it and run index.html. you can also access it without downloading at https://github.com/AidanGXrepo/Launchcode/tree/main/Casino/
